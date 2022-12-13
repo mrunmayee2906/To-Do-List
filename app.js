@@ -5,6 +5,8 @@ const _ = require("lodash");
 require('dotenv').config();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
 
 app.set('view engine', 'ejs');
 
@@ -17,12 +19,9 @@ mongoose.set('strictQuery', false);
 
 // new database: todolistDB
 
-// getting username and password from .env file
-const user_name = process.env.USER_NAME;
-const password = process.env.PASSWORD;
+// getting connection uri from .env file
 
-
-mongoose.connect(`mongodb+srv://${user_name}:${password}@cluster0.1qib2nf.mongodb.net/todolistDB`)
+// mongoose.connect(process.env.MONGO_URI);
 
 // schema
 const itemSchema = mongoose.Schema({
@@ -60,6 +59,18 @@ const listSchema = mongoose.Schema({
 const List = mongoose.model("List", listSchema);
 
 //--------------- FUNCTIONS ------------//
+
+// connecting to mongodb
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.log(error);
+    process.exit(1);
+  }
+}
+
 // insert all these items to our collection
 
 function insertItems(itemList) {
@@ -215,6 +226,10 @@ app.post("/delete", function(req, res) {
   }
 });
 
-app.listen(3000, function() {
-  console.log("Server started on port 3000");
-});
+
+//Connect to the database before listening
+connectDB().then(() => {
+  app.listen(PORT, () => {
+      console.log("listening for requests");
+  })
+})
